@@ -51,22 +51,18 @@ def parse_advert(url):
         assert response.status_code == 200
     soup = BeautifulSoup(response.content, "html.parser")
 
-    title = soup.find("h1", attrs={"class": "u-t2"}).text
-    price = (
-        soup.find("span", attrs={"class": "u-t3"})
-        .text.replace(",-", "")
-        .replace(r" ", "")
-    )
+    title = soup.find("div", attrs={"class": "u-word-break"}).find("h1").text
+    price = soup.find("div", attrs={"class": "u-word-break"}).find("dd").text
 
     # Holds Primærrom,  Soverom,  Etasje, Boligtype, Leieperiode, Energimerking:
     info_box = soup.find(
-        "dl", attrs={"class": "definition-list definition-list--inline"}
+        "dl", attrs={"class": "grid md:grid-cols-3 grid-cols-2 pb-8 gap-16 m-0"}
     )
     values = [i.text.strip() for i in info_box.find_all("dd")]
     keys = [i.text for i in info_box.find_all("dt")]
     inf = dict(zip(keys, values))
 
-    body_box = soup.find("div", attrs={"class": "panel import-decoration"})
+    body_box = soup.find("div", attrs={"data-testid": "beskrivelse"})
 
     # Throw away adverts mentioning any of (dont shy away from "kolletiv{tilbud,trafik}"):
     ban_words = [
@@ -101,7 +97,7 @@ def parse_advert(url):
 
     is_good = True
     try:
-        body_text = body_box.find("p").text.strip().lower()
+        body_text = body_box.text.strip().lower()
         text = inf["Boligtype"].lower() + " " + title.lower() + " " + body_text
 
         for word in ban_words:
@@ -175,7 +171,10 @@ def main():
         soup = BeautifulSoup(response.content, "html.parser")
 
         # For each advert, this class type holds image, title, url, etc
-        adverts = soup.find_all("div", attrs={"class": "ads__unit__content"})
+        adverts = soup.find_all(
+            "a", attrs={"class": "sf-search-ad-link link link--dark hover:no-underline"}
+        )
+        # adverts = soup.find_all("div", attrs={"class": "ads__unit__content"})
         # adverts = soup.find_all('div', attrs={'class':'unit flex align-items-stretch result-item'})
 
         for ad in adverts:
@@ -183,7 +182,7 @@ def main():
             logger.info(f"{i} advert count")
 
             # Find url to advert (assume I dont need a find_all())
-            ad_url = "https://www.finn.no" + ad.find("a").get("href")
+            ad_url = ad.get("href")
             logger.debug(ad_url)
 
             # Only process advert if we haven't seen it yet:
