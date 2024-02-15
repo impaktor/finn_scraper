@@ -1,2 +1,3 @@
 finn_nya_lägenhter.org
-finn_scrape.sav
+*.sav
+.python-version

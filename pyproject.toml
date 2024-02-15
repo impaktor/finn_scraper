@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "finn-scraper"
+version = "0.1.0"
+description = "Webscraper for finn.no"
+authors = ["Your Name <you@example.com>"]
+license = "GPL3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+bs4 = "^0.0.2"
+loguru = "^0.7.2"
+requests = "^2.31.0"
+
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+black = "^24.2.0"
+flake8 = "^7.0.0"
+mypy = "^1.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# Make isort compatible with black
+[tool.isort]
+profile = "black"
