@@ -1,3 +1,24 @@
+"""
+Scrape finn.no for adverts that fulfill my pickyness.
+
+nUnlike finn's system, this:
+- allows me to sort out adverts I've already seen
+- search in radius from multiple different locations
+- match/filter text in the advert body
+- TODO: LLM to describe images, remove if:
+  - floor is concrete, tiled, stone
+  - windows small / basement
+  - ceiling hight is low (as in basement)
+
+Read documentation:
+https://www.crummy.com/software/BeautifulSoup/bs4/doc/#css-selectors
+other stuff:
+https://stackoverflow.com/questions/34301815/understand-the-find-function-in-beautiful-soup
+https://blog.hartleybrody.com/web-scraping/
+or use: http://scrapy.org/
+
+"""
+
 from bs4 import BeautifulSoup
 import requests
 import pickle
@@ -6,17 +27,12 @@ import time
 
 is_debug = True
 
-# read documentation:
-# https://www.crummy.com/software/BeautifulSoup/bs4/doc/#css-selectors
-# other stuff:
-# https://stackoverflow.com/questions/34301815/understand-the-find-function-in-beautiful-soup
-# https://blog.hartleybrody.com/web-scraping/
-# or use: http://scrapy.org/
 
 # meter radius to search:
-radius = 30000
-maxprice = 10500
-seed_url = "https://www.finn.no/realestate/lettings/search.html?area_from=34&geoLocationName=Nydalen%2C+Oslo&lat=59.95057&lon=10.77245" + ("&price_to=%s&radius=%s" % (maxprice, radius))
+radius = 3000
+minprice = 7000
+maxprice = 15500
+seed_url = f"https://www.finn.no/realestate/lettings/search.html?area_from=34&lat=59.970230202946425&lon=10.782417360565233&price_from={minprice}&price_to={maxprice}&radius={radius}"
 
 
 def parse_advert(url, isdebug=False):
