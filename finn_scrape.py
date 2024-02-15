@@ -21,13 +21,17 @@ or use: http://scrapy.org/
 
 import os
 import pickle
+import sys
 import time
 
 import requests
 from bs4 import BeautifulSoup
+from loguru import logger
 
-is_debug = True
 
+# TRACE, DEBUG, INFO, SUCCESS, WARNING, ERROR, CRITICAL
+logger.remove()
+logger.add(sys.stderr, level="DEBUG")
 
 # meter radius to search:
 radius = 3000
@@ -36,14 +40,14 @@ maxprice = 15500
 seed_url = f"https://www.finn.no/realestate/lettings/search.html?area_from=34&lat=59.970230202946425&lon=10.782417360565233&price_from={minprice}&price_to={maxprice}&radius={radius}"
 
 
-def parse_advert(url, isdebug=False):
+def parse_advert(url):
     """Parse finn.no url advert; extract: body, price, livng area"""
 
     # time.sleep(4)
 
     response = requests.get(url)
     if response.status_code != 200:
-        print(response.status_code)
+        logger.warning(response.status_code)
         assert response.status_code == 200
     soup = BeautifulSoup(response.content, "html.parser")
 
@@ -103,15 +107,14 @@ def parse_advert(url, isdebug=False):
         for word in ban_words:
             if text.find(word) != -1:
                 is_good = False
-                if isdebug:
-                    print("\tfound word:", word)
+                logger.debug(f"\tfound word: {word}")
     except Exception:
         pass
 
     if is_good:
-        print("\t", "leie", price)
+        logger.info(f"\t leie price")
         for key in inf:
-            print("\t", key, " ", inf[key])
+            logger.info(f"\t{key} {inf[key]}")
 
     return is_good
 
@@ -143,7 +146,7 @@ def write2file(x, file_path="finn_nya_lägenhter.org"):
     with open(file_path, "w") as f:
         for e in x:
             f.write("%s\n" % e)
-    print("wrote to %s" % file_path)
+    logger.success(f"wrote to {file_path}")
     return True
 
 
@@ -165,7 +168,7 @@ def main():
 
     i = 0
     for url in urls:
-        print("Processing:\n" + url)
+        logger.info(f"Processing:\n{url}")
 
         response = requests.get(url)
         # print(response.status_code)
@@ -177,25 +180,23 @@ def main():
 
         for ad in adverts:
             i += 1
-            print("%s advert count" % i)
+            logger.info(f"{i} advert count")
 
             # Find url to advert (assume I dont need a find_all())
             ad_url = "https://www.finn.no" + ad.find("a").get("href")
-            if is_debug:
-                print(ad_url)
+            logger.debug(ad_url)
 
             # Only process advert if we haven't seen it yet:
             if ad_url not in old_results:
                 new_results[ad_url] = parse_advert(ad_url)
             else:
-                print("skipping/already seen:", ad_url)
+                logger.info(f"skipping/already seen: {ad_url}")
 
         # If next page of hits isn't fully populated, don't keep going:
         if counter > len(adverts):
-            print(url)
-            print(
-                "\n\n---BREAK --- Counter: %s, adverts on page: %s\n\n"
-                % (counter, len(adverts))
+            logger.info(url)
+            logger.info(
+                f"\n\n---BREAK --- Counter: {counter}, adverts on page: {len(adverts)}\n\n"
             )
             break
 
@@ -206,11 +207,10 @@ def main():
     results_good = [i for i in new_results if new_results[i]]
     results_bad = [i for i in new_results if not new_results[i]]
 
-    print(
-        "\nProcessed %s adverts, found %s new good & %s new crappy"
-        % (i, len(results_good), len(results_bad))
+    logger.success(
+        f"\nProcessed {i} adverts, found {len(results_good)} new good & {len(results_bad)} new crappy"
     )
-    print("new results: %s, all results: %s" % (len(new_results), len(all_results)))
+    logger.success(f"new results: {len(new_results)}, all results: {len(all_results)}")
 
     # save out new findings
     write2file(results_good)
