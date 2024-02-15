@@ -19,11 +19,12 @@ or use: http://scrapy.org/
 
 """
 
-from bs4 import BeautifulSoup
-import requests
-import pickle
 import os
+import pickle
 import time
+
+import requests
+from bs4 import BeautifulSoup
 
 is_debug = True
 
